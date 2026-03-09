@@ -48,29 +48,53 @@ Optional kannst du die Theme-Dateien (`*.omp.json`) ebenfalls manuell aus dem Re
 
 ## Themes
 
-Bei der Schnellinstallation werden Themes automatisch nach `~/.config/rhavens_dream/themes` gelegt.  
-Beispiele für mitgelieferte Themes:
-
-- `slimfat.omp.json`
-- `if_tea.omp.json`
-- `blueish.omp.json`
-
+Bei der Schnellinstallation werden alle Themes automatisch nach `~/.config/rhavens_dream/themes` gelegt.  
 Das aktuell verwendete Theme wird (falls noch nicht gesetzt) in `~/.config/rhavens_dream/theme_path` als vollständiger Pfad abgelegt.
 
-**Shell-Integration (z. B. Zsh):**
+### Zsh-Integration und Theme-Wechsel
+
+Empfohlener Ausschnitt für deine `~/.zshrc`, damit das zuletzt gewählte Theme für alle neuen Terminals gilt:
 
 ```bash
-eval "$(rhavens_dream init zsh --config $HOME/.config/rhavens_dream/themes/slimfat.omp.json)"
-```
+export PATH="$HOME/.local/bin:$PATH"
 
-oder, wenn du die Theme-Auswahl wie im privaten Setup nutzt, kannst du `theme_path` auslesen:
-
-```bash
-THEME_PATH_FILE="$HOME/.config/rhavens_dream/theme_path"
-if [ -r "$THEME_PATH_FILE" ]; then
-  eval "$(rhavens_dream init zsh --config "$(cat "$THEME_PATH_FILE")")"
+# rhavens_dream prompt – nutzt zuletzt gewähltes Theme aus ~/.config/rhavens_dream/theme_path
+_RD_THEME_FILE="$HOME/.config/rhavens_dream/theme_path"
+_RD_THEME_DEFAULT="$HOME/.config/rhavens_dream/themes/slimfat.omp.json"
+if [[ -r "$_RD_THEME_FILE" ]]; then
+  _RD_THEME="$(head -1 "$_RD_THEME_FILE" | tr -d '\n\r')"
+  [[ -z "$_RD_THEME" ]] && _RD_THEME="$_RD_THEME_DEFAULT"
+else
+  _RD_THEME="$_RD_THEME_DEFAULT"
 fi
+eval "$(rhavens_dream init zsh --config "$_RD_THEME")"
+
+# Theme wechseln und sofort für alle künftigen Terminals speichern:
+rdtheme() {
+  local dir="$HOME/.config/rhavens_dream"
+  mkdir -p "$dir"
+  if [[ -n "$1" ]]; then
+    printf '%s\n' "$1" > "$dir/theme_path"
+    echo "rhavens_dream Theme: $1"
+    source ~/.zshrc
+  else
+    echo "Aktuell: ${_RD_THEME:-$_RD_THEME_DEFAULT}"
+    echo "Nutzung: rdtheme /voller/pfad/zu/theme.omp.json"
+  fi
+}
 ```
+
+- **Nur im aktuellen Terminal testen (nicht persistent):**
+
+  ```bash
+  eval "$(rhavens_dream init zsh --config $HOME/.config/rhavens_dream/themes/if_tea.omp.json)"
+  ```
+
+- **Theme dauerhaft für alle neuen Terminals setzen:**
+
+  ```bash
+  rdtheme "$HOME/.config/rhavens_dream/themes/slimfat.omp.json"
+  ```
 
 **Terminal-Schrift:** Für Icons im Prompt eine **Nerd Font** einstellen (z. B. MesloLGS Nerd Font, Hack Nerd Font).
 
